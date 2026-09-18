@@ -1,0 +1,6 @@
+{
+  "name": "Money Pocket",
+  "description": "Small business money tracker to record sales, customers, stock, and QAR profit.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
