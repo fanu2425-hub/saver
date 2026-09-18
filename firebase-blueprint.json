@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "User": {
+      "path": "users/{userId}",
+      "description": "User business profile, settings and stock",
+      "fields": {
+        "stock": {
+          "type": "number",
+          "description": "Current stock items count"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      }
+    },
+    "Entry": {
+      "path": "users/{userId}/entries/{entryId}",
+      "description": "Business money entries including sales, restocks, and other income",
+      "fields": {
+        "type": {
+          "type": "string",
+          "description": "Transaction type: sale, restock, or other"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Monetary amount in QAR"
+        },
+        "qty": {
+          "type": "number",
+          "description": "Item count for sale or restock"
+        },
+        "note": {
+          "type": "string",
+          "description": "Item or transaction description"
+        },
+        "customer": {
+          "type": "string",
+          "description": "Customer name if applicable"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Creation timestamp in milliseconds"
+        }
+      }
+    }
+  }
+}
