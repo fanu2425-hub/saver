@@ -9,6 +9,7 @@ import { StockModal } from './components/StockModal.tsx';
 import { ConfirmModal } from './components/ConfirmModal.tsx';
 import { AlertModal } from './components/AlertModal.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
+import { ReceiptModal } from './components/ReceiptModal.tsx';
 import {
   auth,
   db,
@@ -63,6 +64,33 @@ export default function App() {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [selectedReceiptEntry, setSelectedReceiptEntry] = useState<MoneyEntry | null>(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+
+  // Check for scanned receipt QR code from URL query parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const receiptParam = params.get('receipt');
+      if (receiptParam) {
+        const amt = parseFloat(params.get('amt') || '0');
+        const qty = parseInt(params.get('qty') || '1', 10);
+        const cust = params.get('cust') || 'Direct Customer';
+        const item = params.get('item') || 'Sold Item';
+        const date = parseInt(params.get('date') || `${Date.now()}`, 10);
+
+        setSelectedReceiptEntry({
+          type: 'sale',
+          amount: isNaN(amt) ? 0 : amt,
+          qty: isNaN(qty) ? 1 : qty,
+          note: item,
+          customer: cust,
+          createdAt: isNaN(date) ? Date.now() : date,
+        });
+        setIsReceiptModalOpen(true);
+      }
+    }
+  }, []);
 
   // Ref to track whether local data was migrated to user's Firestore
   const migrationAttempted = useRef<string | null>(null);
@@ -223,18 +251,26 @@ export default function App() {
       newStock += newEntry.qty;
     }
 
+    const timestamp = Date.now();
+    const entryPayload: MoneyEntry = {
+      type: newEntry.type,
+      amount: newEntry.amount,
+      qty: newEntry.qty,
+      note: newEntry.note,
+      customer: newEntry.customer || '',
+      createdAt: timestamp,
+    };
+
+    // When something is sold, automatically display the receipt with working QR code
+    if (newEntry.type === 'sale') {
+      setSelectedReceiptEntry(entryPayload);
+      setIsReceiptModalOpen(true);
+    }
+
     if (user) {
       setSyncing(true);
       try {
         const entryRef = doc(collection(db, 'users', user.uid, 'entries'));
-        const entryPayload = {
-          type: newEntry.type,
-          amount: newEntry.amount,
-          qty: newEntry.qty,
-          note: newEntry.note,
-          customer: newEntry.customer || '',
-          createdAt: Date.now(),
-        };
 
         const batch = writeBatch(db);
         batch.set(entryRef, entryPayload);
@@ -252,14 +288,24 @@ export default function App() {
       }
     } else {
       // Offline / Local
-      const entryWithDate: MoneyEntry = {
-        ...newEntry,
-        createdAt: Date.now(),
-      };
       persistLocalData({
         stock: newStock,
-        entries: [entryWithDate, ...data.entries],
+        entries: [entryPayload, ...data.entries],
       });
+    }
+  };
+
+  const handleCloseReceipt = () => {
+    setIsReceiptModalOpen(false);
+    if (typeof window !== 'undefined' && window.location.search.includes('receipt=')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('receipt');
+      url.searchParams.delete('amt');
+      url.searchParams.delete('qty');
+      url.searchParams.delete('cust');
+      url.searchParams.delete('item');
+      url.searchParams.delete('date');
+      window.history.replaceState({}, document.title, url.pathname);
     }
   };
 
@@ -388,6 +434,10 @@ export default function App() {
         entries={data.entries}
         onAddEntry={handleOpenAdd}
         onRemoveEntry={handleRemoveEntry}
+        onViewReceipt={(entry) => {
+          setSelectedReceiptEntry(entry);
+          setIsReceiptModalOpen(true);
+        }}
       />
 
       {/* Entry Modal */}
@@ -428,6 +478,13 @@ export default function App() {
         isOpen={alertMessage !== null}
         message={alertMessage || ''}
         onClose={() => setAlertMessage(null)}
+      />
+
+      {/* Sale Receipt with Working QR Code */}
+      <ReceiptModal
+        isOpen={isReceiptModalOpen}
+        entry={selectedReceiptEntry}
+        onClose={handleCloseReceipt}
       />
     </main>
   );

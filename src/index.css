@@ -474,3 +474,46 @@ select:focus {
     border-radius: 20px;
   }
 }
+
+/* Receipt Print & View Styles */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  #main-app > *:not(.receipt-modal-wrapper) {
+    display: none !important;
+  }
+
+  .receipt-modal-wrapper {
+    position: static !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    display: block !important;
+    inset: auto !important;
+  }
+
+  .receipt-card-container {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    animation: none !important;
+  }
+
+  .receipt-paper {
+    box-shadow: none !important;
+    border: 1px solid #111111 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
